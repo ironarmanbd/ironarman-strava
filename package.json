@@ -1,0 +1,9 @@
+{
+  "name": "ironarman-strava",
+  "version": "1.0.0",
+  "description": "Strava proxy API for ironarman.com",
+  "private": true,
+  "engines": {
+    "node": "18.x"
+  }
+}

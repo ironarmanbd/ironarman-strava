@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: transparent;
+    color: #ffffff;
+    padding: 0;
+  }
+
+  .dashboard { width: 100%; }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .strava-logo {
+    width: 36px; height: 36px;
+    background: #FC4C02;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .header-text .title { font-size: 16px; font-weight: 600; color: #fff; }
+  .header-text .sub   { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  /* Section label */
+  .section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-bottom: 10px;
+    margin-top: 20px;
+  }
+
+  /* Stats row */
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat-card {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 6px; }
+  .stat-value { font-size: 24px; font-weight: 600; color: #fff; line-height: 1; }
+  .stat-unit  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+  /* Sport breakdown */
+  .sports-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .sport-card {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px 10px;
+    text-align: center;
+  }
+  .sport-emoji  { font-size: 22px; margin-bottom: 8px; }
+  .sport-name   { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+  .sport-km     { font-size: 17px; font-weight: 600; color: #fff; }
+  .sport-count  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+  /* YTD grid */
+  .ytd-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .ytd-card {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .ytd-label { font-size: 11px; color: rgba(255,255,255,0.45); margin-bottom: 5px; }
+  .ytd-value { font-size: 20px; font-weight: 600; color: #fff; }
+  .bar-track { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 10px; overflow: hidden; }
+  .bar-fill  { height: 3px; background: #FC4C02; border-radius: 2px; width: 0%; transition: width 1s ease; }
+
+  /* Activity feed */
+  .activities { display: flex; flex-direction: column; gap: 8px; }
+  .activity {
+    background: rgba(255,255,255,0.06);
+    border: 0.5px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .act-icon {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .icon-swim { background: rgba(55,138,221,0.2); }
+  .icon-ride { background: rgba(186,117,23,0.2); }
+  .icon-run  { background: rgba(99,153,34,0.2);  }
+  .icon-other{ background: rgba(255,255,255,0.1); }
+  .act-body  { flex: 1; min-width: 0; }
+  .act-name  { font-size: 13px; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .act-meta  { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+  .act-stats { display: flex; gap: 12px; margin-top: 7px; flex-wrap: wrap; }
+  .act-stat  { font-size: 12px; color: #fff; }
+  .act-stat span { color: rgba(255,255,255,0.4); }
+
+  /* Footer */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+  }
+  .strava-link {
+    font-size: 12px;
+    color: #FC4C02;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .updated { font-size: 11px; color: rgba(255,255,255,0.3); }
+
+  /* Loading / error */
+  .loading {
+    text-align: center;
+    padding: 40px 0;
+    color: rgba(255,255,255,0.4);
+    font-size: 14px;
+  }
+  .dot-anim::after {
+    content: '';
+    animation: dots 1.5s steps(4, end) infinite;
+  }
+  @keyframes dots {
+    0%,20%  { content: ''; }
+    40%     { content: '.'; }
+    60%     { content: '..'; }
+    80%,100%{ content: '...'; }
+  }
+  .error-msg {
+    background: rgba(220,50,50,0.15);
+    border: 0.5px solid rgba(220,50,50,0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #ff8080;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="dashboard">
+
+  <div class="header">
+    <div class="strava-logo">
+      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+        <path d="M10 24l6-12 3 6 2.5-4L26 24" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <div class="title">Performance Dashboard</div>
+      <div class="sub">Live from Strava · Arman Rashid</div>
+    </div>
+  </div>
+
+  <div id="loading" class="loading"><span class="dot-anim">Loading training data</span></div>
+  <div id="error"  style="display:none;"></div>
+  <div id="content" style="display:none;">
+
+    <div class="section-label">This week</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Distance</div><div class="stat-value" id="w-dist">—</div><div class="stat-unit">km</div></div>
+      <div class="stat-card"><div class="stat-label">Training time</div><div class="stat-value" id="w-time">—</div><div class="stat-unit">hours</div></div>
+      <div class="stat-card"><div class="stat-label">Elevation</div><div class="stat-value" id="w-elev">—</div><div class="stat-unit">metres</div></div>
+    </div>
+
+    <div class="section-label">Sport breakdown · year to date</div>
+    <div class="sports-grid">
+      <div class="sport-card"><div class="sport-emoji">🏊</div><div class="sport-name">Swim</div><div class="sport-km" id="sp-swim-km">—</div><div class="sport-count" id="sp-swim-n">—</div></div>
+      <div class="sport-card"><div class="sport-emoji">🚴</div><div class="sport-name">Bike</div><div class="sport-km" id="sp-ride-km">—</div><div class="sport-count" id="sp-ride-n">—</div></div>
+      <div class="sport-card"><div class="sport-emoji">🏃</div><div class="sport-name">Run</div><div class="sport-km" id="sp-run-km">—</div><div class="sport-count" id="sp-run-n">—</div></div>
+    </div>
+
+    <div class="section-label">Year-to-date totals</div>
+    <div class="ytd-grid">
+      <div class="ytd-card"><div class="ytd-label">Total distance</div><div class="ytd-value" id="ytd-dist">—</div><div class="bar-track"><div class="bar-fill" id="bar-dist"></div></div></div>
+      <div class="ytd-card"><div class="ytd-label">Moving time</div><div class="ytd-value" id="ytd-time">—</div><div class="bar-track"><div class="bar-fill" id="bar-time"></div></div></div>
+      <div class="ytd-card"><div class="ytd-label">Elevation gain</div><div class="ytd-value" id="ytd-elev">—</div><div class="bar-track"><div class="bar-fill" id="bar-elev"></div></div></div>
+      <div class="ytd-card"><div class="ytd-label">Activities logged</div><div class="ytd-value" id="ytd-acts">—</div><div class="bar-track"><div class="bar-fill" id="bar-acts"></div></div></div>
+    </div>
+
+    <div class="section-label">Recent activities</div>
+    <div class="activities" id="act-list"></div>
+
+    <div class="footer">
+      <a class="strava-link" href="https://www.strava.com/athletes/91535078" target="_blank">View full profile on Strava →</a>
+      <div class="updated" id="updated"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ⚠️ REPLACE THIS with your Vercel deployment URL after deploying
+  const API_URL = 'https://YOUR-PROJECT.vercel.app/api/strava';
+
+  function fmtKm(m)   { return (m / 1000).toFixed(1) + ' km'; }
+  function fmtHrs(s)  { return (s / 3600).toFixed(1) + ' h'; }
+  function fmtElev(m) { return Math.round(m) + ' m'; }
+  function fmtTime(s) {
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+    return h > 0 ? h + 'h ' + m + 'm' : m + 'm';
+  }
+  function sportInfo(type) {
+    type = (type || '').toLowerCase();
+    if (/swim/.test(type))            return { emoji: '🏊', cls: 'icon-swim' };
+    if (/ride|bike|cycling/.test(type)) return { emoji: '🚴', cls: 'icon-ride' };
+    if (/run/.test(type))             return { emoji: '🏃', cls: 'icon-run'  };
+    return { emoji: '⚡', cls: 'icon-other' };
+  }
+
+  async function load() {
+    try {
+      const res  = await fetch(API_URL + '?per_page=50');
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const acts = await res.json();
+      render(acts);
+    } catch(e) {
+      document.getElementById('loading').style.display = 'none';
+      const err = document.getElementById('error');
+      err.innerHTML = '<div class="error-msg">Could not load Strava data: ' + e.message + '</div>';
+      err.style.display = 'block';
+    }
+  }
+
+  function render(acts) {
+    const now       = new Date();
+    const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+    const yearStart = new Date(now.getFullYear(), 0, 1);
+
+    let wD=0, wT=0, wE=0, ytdD=0, ytdT=0, ytdE=0, ytdN=0;
+    const sp = { swim:{d:0,n:0}, ride:{d:0,n:0}, run:{d:0,n:0} };
+
+    acts.forEach(a => {
+      const date = new Date(a.start_date_local);
+      const d = a.distance||0, t = a.moving_time||0, e = a.total_elevation_gain||0;
+      const type = (a.sport_type||a.type||'').toLowerCase();
+      if (date >= weekStart) { wD+=d; wT+=t; wE+=e; }
+      if (date >= yearStart) { ytdD+=d; ytdT+=t; ytdE+=e; ytdN++; }
+      if (/swim/.test(type))              { sp.swim.d+=d; sp.swim.n++; }
+      else if (/ride|bike|cycling/.test(type)) { sp.ride.d+=d; sp.ride.n++; }
+      else if (/run/.test(type))          { sp.run.d+=d;  sp.run.n++;  }
+    });
+
+    document.getElementById('w-dist').textContent = (wD/1000).toFixed(1);
+    document.getElementById('w-time').textContent = (wT/3600).toFixed(1);
+    document.getElementById('w-elev').textContent = Math.round(wE);
+
+    document.getElementById('sp-swim-km').textContent = fmtKm(sp.swim.d);
+    document.getElementById('sp-swim-n').textContent  = sp.swim.n + ' sessions';
+    document.getElementById('sp-ride-km').textContent = fmtKm(sp.ride.d);
+    document.getElementById('sp-ride-n').textContent  = sp.ride.n + ' rides';
+    document.getElementById('sp-run-km').textContent  = fmtKm(sp.run.d);
+    document.getElementById('sp-run-n').textContent   = sp.run.n + ' runs';
+
+    document.getElementById('ytd-dist').textContent = Math.round(ytdD/1000) + ' km';
+    document.getElementById('ytd-time').textContent = Math.round(ytdT/3600) + ' hrs';
+    document.getElementById('ytd-elev').textContent = Math.round(ytdE) + ' m';
+    document.getElementById('ytd-acts').textContent = ytdN + ' activities';
+
+    setTimeout(() => {
+      document.getElementById('bar-dist').style.width = Math.min(100, ytdD/3000000*100).toFixed(1) + '%';
+      document.getElementById('bar-time').style.width = Math.min(100, ytdT/(200*3600)*100).toFixed(1) + '%';
+      document.getElementById('bar-elev').style.width = Math.min(100, ytdE/30000*100).toFixed(1) + '%';
+      document.getElementById('bar-acts').style.width = Math.min(100, ytdN/150*100).toFixed(1) + '%';
+    }, 300);
+
+    const list = document.getElementById('act-list');
+    acts.slice(0,6).forEach(a => {
+      const { emoji, cls } = sportInfo(a.sport_type||a.type);
+      const date = new Date(a.start_date_local).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      const el = document.createElement('div');
+      el.className = 'activity';
+      el.innerHTML = `
+        <div class="act-icon ${cls}">${emoji}</div>
+        <div class="act-body">
+          <div class="act-name">${a.name}</div>
+          <div class="act-meta">${date} · ${a.sport_type||a.type||'Activity'}</div>
+          <div class="act-stats">
+            <div class="act-stat">${(a.distance/1000).toFixed(1)} <span>km</span></div>
+            <div class="act-stat">${fmtTime(a.moving_time||0)} <span>time</span></div>
+            ${a.total_elevation_gain ? `<div class="act-stat">${Math.round(a.total_elevation_gain)}<span>m elev</span></div>` : ''}
+          </div>
+        </div>`;
+      list.appendChild(el);
+    });
+
+    document.getElementById('updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  }
+
+  load();
+</script>
+</body>
+</html>
